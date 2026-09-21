@@ -1,0 +1,8 @@
+{
+  "appId": "com.minglun.app",
+  "appName": "栀子花",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false
+  }
+}
