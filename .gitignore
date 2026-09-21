@@ -1,0 +1,50 @@
+# ============================================================
+#  栀子花 · 命轮优化工具 —— 仓库只放「源码」，不放游戏资源/工具链/密钥
+# ============================================================
+
+# ---------- 绝不入库：签名密钥与口令 ----------
+*.keystore
+*.jks
+keystore-info.txt
+minglun-mobile/minglun-release.keystore
+minglun-mobile/keystore-info.txt
+minglun-mobile/android/keystore.properties
+
+# ---------- 绝不入库：游戏本体、解包数据、抓包（版权 + 体积） ----------
+game-dump/
+栀子花/
+栀子花解包/
+game-recon/
+杂物/
+*.apk
+*.obb
+*.pak
+手机渠道快照.json
+栀子花数据库-*.json
+芙宁娜.png
+
+# ---------- 第三方工具链 / 缓存（体积） ----------
+.android-tools/
+.npm-cache/
+
+# ---------- 依赖与构建产物 ----------
+node_modules/
+**/node_modules/
+dist/
+minglun-mobile/dist/
+**/build/
+.gradle/
+**/.gradle/
+minglun-mobile/android/local.properties
+minglun-mobile/android/app/src/main/assets/public/
+minglun-mobile/android/app/src/main/assets/capacitor.config.json
+minglun-mobile/android/app/src/main/assets/capacitor.plugins.json
+minglun-mobile/android/app/src/main/assets/cordova.js
+minglun-mobile/android/app/src/main/assets/cordova_plugins.js
+*.iml
+
+# ---------- 杂项 ----------
+*.log
+$null
+.DS_Store
+Thumbs.db
