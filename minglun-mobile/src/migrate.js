@@ -43,6 +43,54 @@ export function upgradeWorkbench(stored, bundled) {
     }
   }
 
+  // 4) 关系盘的 gameEntryId 与 order：早期数据里 5 个 id 写错、5 个丢了（0），
+  //    连带着这些行的 order 落在了别的轮的区间里 —— 结果是它们排不进游戏的盘序。
+  //    按名字从内置数据里把 id 找回来，order 也照内置数据对齐。
+  //    （内置数据的这两列由 game-dump/gen-wheel-order.mjs 对着游戏配置校过）
+  const bundledWheels = bundled.fateWheels;
+  if (Array.isArray(bundledWheels) && Array.isArray(next.fateWheels)) {
+    const bundledIdSet = new Set(bundledWheels.map((w) => w.gameEntryId).filter(Boolean));
+    const idByName = new Map();
+    for (const w of bundledWheels) if (w.gameEntryId) idByName.set(w.name, w.gameEntryId);
+    const bundledByEntry = new Map(bundledWheels.map((w) => [w.gameEntryId, w]));
+    let wheelTouched = false;
+    const patched = next.fateWheels.map((w) => {
+      let entry = w.gameEntryId;
+      if (!entry || !bundledIdSet.has(entry)) {
+        const want = idByName.get(w.name);
+        if (want) entry = want;
+      }
+      const ref = bundledByEntry.get(entry);
+      const order = ref ? ref.order : w.order;
+      if (entry === w.gameEntryId && order === w.order) return w;
+      wheelTouched = true;
+      return { ...w, gameEntryId: entry, order };
+    });
+    if (wheelTouched) {
+      next.fateWheels = patched;
+      changed = true;
+    }
+  }
+
+  // 5) 四个「轮」的先后：早期元数据写的是 创始 < 物质 < 执行 < 宿命，
+  //    但游戏里是 物质 → 执行 → 创始 → 宿命（依据 cfortunewheelcfg.bny 里段的先后）。
+  //    这个字段目前只影响展示，照内置数据对齐即可。
+  const bundledCats = bundled.wheelCategories;
+  if (Array.isArray(bundledCats) && Array.isArray(next.wheelCategories)) {
+    const orderById = new Map(bundledCats.map((c) => [c.id, c.order]));
+    let catTouched = false;
+    const patchedCats = next.wheelCategories.map((c) => {
+      const want = orderById.get(c.id);
+      if (want === undefined || want === c.order) return c;
+      catTouched = true;
+      return { ...c, order: want };
+    });
+    if (catTouched) {
+      next.wheelCategories = patchedCats;
+      changed = true;
+    }
+  }
+
   return changed ? next : stored;
 }
 

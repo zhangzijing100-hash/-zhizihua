@@ -48,3 +48,13 @@ minglun-mobile/android/app/src/main/assets/cordova_plugins.js
 $null
 .DS_Store
 Thumbs.db
+
+# ---------- 归档 / 构建中间产物 ----------
+_archive/
+.build-tmp/
+.gradle-home/
+.gradle-native/
+minglun-mobile/src/data/workbench.json.bak-*
+
+# ---------- 与项目无关的零散文件 ----------
+【哲风壁纸】*.jpg
