@@ -136,6 +136,17 @@ button.row-main:active { opacity: .75; }
 .stage { padding: 2px 8px; border-radius: 5px; background: rgba(228,122,67,.18); color: #f0b18a; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .wi-meta { display: flex; flex-direction: column; gap: 1px; margin-top: 4px; font-size: 11px; color: var(--muted); }
 .wi-meta span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wheel-group { margin-bottom: 10px; }
+.wheel-group-head {
+  display: flex; align-items: baseline; gap: 8px;
+  font-size: 13px; margin: 12px 0 6px; padding-left: 8px;
+  border-left: 3px solid var(--accent); color: var(--text);
+}
+.wheel-group-head small { font-weight: 400; font-size: 11px; color: var(--muted); }
+.wi-unknown {
+  align-self: flex-start; padding: 0 6px; border-radius: 6px; font-size: 10.5px;
+  border: 1px solid rgba(228,122,67,.6); color: #f0b18a;
+}
 
 .attr-list { display: flex; flex-direction: column; gap: 4px; }
 .attr-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 9px; }

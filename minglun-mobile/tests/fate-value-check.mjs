@@ -81,15 +81,17 @@ console.log("\n=== 7. 游戏官方数据核对（.bny 解出的 475 条）===");
 eq(audit.official.checked, 475, "已核对的盘数");
 eq(audit.official.matched, 475, "与官方一致的盘数");
 eq(audit.official.mismatches.length, 0, "与官方不一致的盘数");
-eq(audit.official.missing.length, 5, "有 entryId 但官方表未收录的盘数");
+eq(audit.official.missing.length, 10, "有 entryId 但官方命轮值表未收录的盘数（422320251-255 / 422310301-305 这批新盘）");
 const custom = workbench.fateWheels.filter((w) => !w.gameEntryId);
-eq(custom.length, 5, "手工新增盘数（gameEntryId=0）");
+eq(custom.length, 0, "没有 gameEntryId 的盘数（2026-09-30 已按游戏配置 cfortunewheelcfg.bny 全部补齐）");
 
 const confirmed = audit.normal.mismatches.filter((m) => m.officialConfirmed);
 const manual = audit.normal.mismatches.filter((m) => !m.officialConfirmed);
 eq(confirmed.length, 11, "公式不符且被官方确证的盘数");
 eq(manual.length, 2, "公式不符且为手工录入的盘数");
-ok(manual.every((m) => !workbench.fateWheels.find((w) => w.id === m.id).gameEntryId), "这 2 个确实没有 gameEntryId");
+// 「手工」的判据是「entryId 不在官方命轮值表里」，而不是「没有 entryId」
+// （后者在 2026-09-30 修完 id 之后恒为 0）
+ok(manual.every((m) => officialFateValue(workbench.fateWheels.find((w) => w.id === m.id).gameEntryId) === null), "这 2 个的 entryId 都不在官方命轮值表里");
 ok(officialFateValue(422310185) === 330, "officialFateValue(422310185) == 330");
 
 console.log("\n=== 8. 安全修正（绝不覆盖已有数值）===");

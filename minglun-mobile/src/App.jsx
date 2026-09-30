@@ -29,6 +29,7 @@ import {
   setConsole,
 } from "./native/gameData.js";
 import { GuideBody, CONSOLE_WARNING } from "./Guide.jsx";
+import { WHEEL_CATEGORY_ORDER, categoryOrderOf, wheelOrderOf } from "./data/wheelOrder.js";
 import { parseFortuneLog, timeFromLogName } from "./data/fortuneLog.js";
 
 const RARITY_ORDER = ["UR", "SSR_LIMITED", "SSR", "SR", "R"];
@@ -1245,24 +1246,63 @@ function HistoryTab({ history, loadHistoryEntry, deleteHistory, deleteMany }) {
 function ResultView({ result, helpers }) {
   const { wheelById, categoryById, characterById, sourceById, metricById, wheelStageLabel } = helpers;
   const statusLabel = result.isProvenOptimal ? "全局最优" : result.status === "time_limit" ? "限时可行" : result.status;
+
+  // 按**游戏里的盘顺序**排列：先按「轮」的先后（物质→执行→创始→宿命），
+  // 组内按盘在游戏里的显示顺序。顺序表由 game-dump/gen-wheel-order.mjs
+  // 从游戏配置 cfortunewheelcfg.bny 解出，见 data/wheelOrder.js。
+  // 注意：只排这份渲染用的新数组，不动 result.fateWheels 本体（历史记录不受影响）。
+  const groups = useMemo(() => {
+    const items = [];
+    for (const line of result.fateWheels) {
+      const wheel = wheelById.get(line.fateWheelId);
+      if (wheel) items.push({ line, wheel, unknown: wheelOrderOf(wheel.gameEntryId) === Number.POSITIVE_INFINITY });
+    }
+    items.sort((a, b) => {
+      const ca = categoryOrderOf(a.wheel.wheelCategoryId);
+      const cb = categoryOrderOf(b.wheel.wheelCategoryId);
+      if (ca !== cb) return ca - cb;
+      const oa = wheelOrderOf(a.wheel.gameEntryId);
+      const ob = wheelOrderOf(b.wheel.gameEntryId);
+      if (oa !== ob) return oa - ob;
+      return String(a.wheel.name).localeCompare(String(b.wheel.name), "zh");
+    });
+    const out = [];
+    const seen = new Map();
+    for (const item of items) {
+      const cid = item.wheel.wheelCategoryId;
+      let g = seen.get(cid);
+      if (!g) {
+        g = { id: cid, name: categoryById.get(cid)?.name ?? "其他", items: [] };
+        seen.set(cid, g);
+        out.push(g);
+      }
+      g.items.push(item);
+    }
+    return out;
+  }, [result, wheelById, categoryById]);
+
   return (
     <div className="result">
       <div className="result-head"><span className={"pill " + result.status}>{statusLabel}</span><strong>{formatNumber(result.objectiveScore, 4)}</strong><small>{formatNumber(result.elapsedMilliseconds / 1000, 2)} 秒</small></div>
       <h2>命轮方案（{result.fateWheels.length} 个）</h2>
-      <div className="wheel-list">
-        {result.fateWheels.map((w) => {
-          const wheel = wheelById.get(w.fateWheelId);
-          if (!wheel) return null;
-          const category = categoryById.get(wheel.wheelCategoryId);
-          const members = wheel.members.map((m) => characterById.get(m.characterId)?.name).filter(Boolean).join("、");
-          return (
-            <div key={w.fateWheelId} className="wheel-item">
-              <div className="wi-head"><strong>{wheel.name}</strong><span className="stage">{wheelStageLabel(w.rank, w.star, 5)}</span></div>
-              <div className="wi-meta"><span>{category?.name}</span><span>{members}</span></div>
-            </div>
-          );
-        })}
-      </div>
+      <p className="tip">顺序与游戏里各「轮」的盘序一致，照着往下加点就行。</p>
+      {groups.map((g) => (
+        <div className="wheel-group" key={g.id}>
+          <h3 className="wheel-group-head">{g.name}<small>{g.items.length} 个</small></h3>
+          <div className="wheel-list">
+            {g.items.map(({ line: w, wheel, unknown }) => {
+              const category = categoryById.get(wheel.wheelCategoryId);
+              const members = wheel.members.map((m) => characterById.get(m.characterId)?.name).filter(Boolean).join("、");
+              return (
+                <div key={w.fateWheelId} className="wheel-item">
+                  <div className="wi-head"><strong>{wheel.name}</strong><span className="stage">{wheelStageLabel(w.rank, w.star, 5)}</span></div>
+                  <div className="wi-meta"><span>{category?.name}</span><span>{members}</span>{unknown && <span className="wi-unknown">顺序未知</span>}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ))}
       {(result.currencyUsage ?? []).length > 0 && (
         <>
           <h2>兑换消耗</h2>
