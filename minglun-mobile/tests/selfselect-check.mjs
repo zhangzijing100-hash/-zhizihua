@@ -1,7 +1,7 @@
 // 「SSR 命轮自选」机制验证 + 全局最优性检验
 // 运行： node tests/selfselect-check.mjs
 import { readFileSync } from "node:fs";
-import { solveWorkbench } from "../src/solver.js";
+import { solveWorkbench } from "../src/engine/solver.js";
 
 const wbFull = JSON.parse(readFileSync(new URL("../src/data/workbench.json", import.meta.url), "utf8"));
 const EXCLUDED = new Set(["source.global.element-resilience", "source.global.element-resilience-break"]);

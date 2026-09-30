@@ -26,7 +26,7 @@
 // （原始 data.bin 偏移 37015568，大端 int32）解出 475 条官方 wheelValue 并打包为
 // ./data/officialFateValues.js。经逐条比对：**数据库中 475 条全部与官方一致（0 不一致）**。
 // 因此本文件的公式只用于「估算新增盘」，绝不能用来覆盖已有盘的数据。
-import officialFateValues from "./data/officialFateValues.js";
+import officialFateValues from "../data/officialFateValues.js";
 
 export const OFFICIAL_FATE_VALUES = officialFateValues;
 

@@ -51,5 +51,5 @@ export function partnerOfWheelItem(itemId) {
 }
 `;
 
-writeFileSync("../minglun-mobile/src/data/wheelInventoryMap.js", out, "utf8");
-console.log("\n→ minglun-mobile/src/data/wheelInventoryMap.js");
+writeFileSync("../minglun-mobile/src/features/read/wheelInventoryMap.js", out, "utf8");
+console.log("\n→ minglun-mobile/src/features/read/wheelInventoryMap.js");

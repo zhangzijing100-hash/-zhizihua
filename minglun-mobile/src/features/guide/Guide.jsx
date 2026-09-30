@@ -1,12 +1,12 @@
 // App 内嵌的使用指南。图片放在 src/assets/guide/，以后换图直接替换同名文件即可。
-import img1 from "./assets/guide/shizuku-1.png";
-import img2 from "./assets/guide/shizuku-2.png";
-import img3 from "./assets/guide/shizuku-3.png";
-import img4 from "./assets/guide/shizuku-4.png";
-import plan1 from "./assets/guide/plan-1.jpg";
-import con1 from "./assets/guide/console-1.png";
-import con2 from "./assets/guide/console-2.png";
-import con3 from "./assets/guide/console-3.png";
+import img1 from "../../assets/guide/shizuku-1.png";
+import img2 from "../../assets/guide/shizuku-2.png";
+import img3 from "../../assets/guide/shizuku-3.png";
+import img4 from "../../assets/guide/shizuku-4.png";
+import plan1 from "../../assets/guide/plan-1.jpg";
+import con1 from "../../assets/guide/console-1.png";
+import con2 from "../../assets/guide/console-2.png";
+import con3 from "../../assets/guide/console-3.png";
 
 export const GUIDE_STEPS = [
   {

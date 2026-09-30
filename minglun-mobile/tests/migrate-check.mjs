@@ -1,11 +1,11 @@
 // 数据库补齐验证：用你真实导出的旧数据库（缺 currencies / extraPercents）当输入
 // 运行： node tests/migrate-check.mjs
 import { readFileSync } from "node:fs";
-import { upgradeWorkbench } from "../src/migrate.js";
+import { upgradeWorkbench } from "../src/core/migrate.js";
 
 const read = (rel) => JSON.parse(readFileSync(new URL(rel, import.meta.url), "utf8"));
 const bundled = read("../src/data/workbench.json");
-const oldExportRaw = read("../../栀子花数据库-2026-09-15.json");
+const oldExportRaw = read("../../_archive/db-snapshots/栀子花数据库-2026-09-15.json");
 const oldExport = oldExportRaw.workbench ?? oldExportRaw;
 
 console.log("输入 = 你导出的旧库:", oldExportRaw.format ?? "(裸 workbench)");

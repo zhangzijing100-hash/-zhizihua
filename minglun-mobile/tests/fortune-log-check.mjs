@@ -1,7 +1,7 @@
 // 用真实日志验证「printfortunewheel 输出 → 63 个伙伴的命轮数量」这条链
 import { readFileSync } from "node:fs";
-import { parseFortuneLog, parseSections, timeFromLogName } from "../src/data/fortuneLog.js";
-import { WHEEL_ITEM_TO_PARTNER, partnerOfWheelItem } from "../src/data/wheelInventoryMap.js";
+import { parseFortuneLog, parseSections, timeFromLogName } from "../src/features/read/fortuneLog.js";
+import { WHEEL_ITEM_TO_PARTNER, partnerOfWheelItem } from "../src/features/read/wheelInventoryMap.js";
 import workbench from "../src/data/workbench.json" with { type: "json" };
 
 let pass = 0, fail = 0;
