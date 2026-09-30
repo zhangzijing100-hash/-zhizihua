@@ -6,9 +6,9 @@
 *.keystore
 *.jks
 keystore-info.txt
-minglun-mobile/minglun-release.keystore
-minglun-mobile/keystore-info.txt
-minglun-mobile/android/keystore.properties
+keystore.properties
+**/android/keystore.properties
+**/minglun-release.keystore
 
 # ---------- 绝不入库：游戏本体、解包数据、抓包（版权 + 体积） ----------
 # 注意：game-dump 的**代码与结论**要入库（见下方白名单），体积大的游戏数据排除
