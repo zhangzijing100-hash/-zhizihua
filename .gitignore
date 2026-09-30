@@ -11,7 +11,13 @@ minglun-mobile/keystore-info.txt
 minglun-mobile/android/keystore.properties
 
 # ---------- 绝不入库：游戏本体、解包数据、抓包（版权 + 体积） ----------
-game-dump/
+# 注意：game-dump 的**代码与结论**要入库（见下方白名单），体积大的游戏数据排除
+game-dump/*
+!game-dump/*.mjs
+!game-dump/*.md
+!game-dump/*.sh
+!game-dump/*.txt
+!game-dump/命轮*.json
 栀子花/
 栀子花解包/
 game-recon/
