@@ -1,0 +1,266 @@
+{
+  "note": "来自 CFortuneWheelItemCfg.bny（游戏静态配置）。itemId 是命轮材料的物品 id，partnerId 对应 App 的 gamePartnerId。",
+  "source": "data/bny/drc.gsp.fortunewheel.confbean.CFortuneWheelItemCfg.bny",
+  "count": 37,
+  "table": [
+    {
+      "itemId": 100506002,
+      "partnerId": 220003001,
+      "quality": "SSR",
+      "name": "恺撒",
+      "appCharacterId": "character.partner.220003001"
+    },
+    {
+      "itemId": 100506006,
+      "partnerId": 220003002,
+      "quality": "SSR",
+      "name": "陈墨瞳",
+      "appCharacterId": "character.partner.220003002"
+    },
+    {
+      "itemId": 100506009,
+      "partnerId": 220003003,
+      "quality": "SSR",
+      "name": "路明非",
+      "appCharacterId": "character.partner.220003003"
+    },
+    {
+      "itemId": 100506008,
+      "partnerId": 220003004,
+      "quality": "SSR",
+      "name": "苏恩曦",
+      "appCharacterId": "character.partner.220003004"
+    },
+    {
+      "itemId": 100506014,
+      "partnerId": 220003005,
+      "quality": "SSR",
+      "name": "酒德麻衣",
+      "appCharacterId": "character.partner.220003005"
+    },
+    {
+      "itemId": 100506022,
+      "partnerId": 220003006,
+      "quality": "SSR",
+      "name": "芬格尔",
+      "appCharacterId": "character.partner.220003006"
+    },
+    {
+      "itemId": 100506019,
+      "partnerId": 220003007,
+      "quality": "SSR",
+      "name": "诺玛",
+      "appCharacterId": "character.partner.220003007"
+    },
+    {
+      "itemId": 100506024,
+      "partnerId": 220003008,
+      "quality": "SSR",
+      "name": "路鸣泽",
+      "appCharacterId": "character.partner.220003008"
+    },
+    {
+      "itemId": 100506050,
+      "partnerId": 220003009,
+      "quality": "SSR",
+      "name": "昂热",
+      "appCharacterId": "character.partner.220003009"
+    },
+    {
+      "itemId": 100506048,
+      "partnerId": 220003010,
+      "quality": "SSR",
+      "name": "夏弥",
+      "appCharacterId": "character.partner.220003010"
+    },
+    {
+      "itemId": 100506047,
+      "partnerId": 220003011,
+      "quality": "SSR",
+      "name": "王将",
+      "appCharacterId": "character.partner.220003011"
+    },
+    {
+      "itemId": 100506046,
+      "partnerId": 220003012,
+      "quality": "SSR",
+      "name": "帕西",
+      "appCharacterId": "character.partner.220003012"
+    },
+    {
+      "itemId": 100506049,
+      "partnerId": 220003013,
+      "quality": "SSR",
+      "name": "楚子航",
+      "appCharacterId": "character.partner.220003013"
+    },
+    {
+      "itemId": 100506039,
+      "partnerId": 220003014,
+      "quality": "SSR",
+      "name": "零",
+      "appCharacterId": "character.partner.220003014"
+    },
+    {
+      "itemId": 100506094,
+      "partnerId": 220003015,
+      "quality": "SSR",
+      "name": "上杉绘梨衣",
+      "appCharacterId": "character.partner.220003015"
+    },
+    {
+      "itemId": 100506076,
+      "partnerId": 220003016,
+      "quality": "SSR",
+      "name": "守夜人",
+      "appCharacterId": "character.partner.220003016"
+    },
+    {
+      "itemId": 100506098,
+      "partnerId": 220003017,
+      "quality": "SSR",
+      "name": "源稚生",
+      "appCharacterId": "character.partner.220003017"
+    },
+    {
+      "itemId": 100506099,
+      "partnerId": 220003018,
+      "quality": "SSR",
+      "name": "源稚女",
+      "appCharacterId": "character.partner.220003018"
+    },
+    {
+      "itemId": 100506044,
+      "partnerId": 220003019,
+      "quality": "SSR",
+      "name": "康斯坦丁",
+      "appCharacterId": "character.partner.220003019"
+    },
+    {
+      "itemId": 100506061,
+      "partnerId": 220003020,
+      "quality": "SSR",
+      "name": "上杉越",
+      "appCharacterId": "character.partner.220003020"
+    },
+    {
+      "itemId": 100506064,
+      "partnerId": 220003021,
+      "quality": "SSR",
+      "name": "诺顿",
+      "appCharacterId": "character.partner.220003021"
+    },
+    {
+      "itemId": 100506004,
+      "partnerId": 220002001,
+      "quality": "SR",
+      "name": "叶胜",
+      "appCharacterId": "character.partner.220002001"
+    },
+    {
+      "itemId": 100506003,
+      "partnerId": 220002002,
+      "quality": "SR",
+      "name": "酒德亚纪",
+      "appCharacterId": "character.partner.220002002"
+    },
+    {
+      "itemId": 100506013,
+      "partnerId": 220002003,
+      "quality": "SR",
+      "name": "古德里安",
+      "appCharacterId": "character.partner.220002003"
+    },
+    {
+      "itemId": 100506010,
+      "partnerId": 220002004,
+      "quality": "SR",
+      "name": "苏茜",
+      "appCharacterId": "character.partner.220002004"
+    },
+    {
+      "itemId": 100506011,
+      "partnerId": 220002005,
+      "quality": "SR",
+      "name": "曼斯",
+      "appCharacterId": "character.partner.220002005"
+    },
+    {
+      "itemId": 100506027,
+      "partnerId": 220002007,
+      "quality": "SR",
+      "name": "曼施坦因",
+      "appCharacterId": "character.partner.220002007"
+    },
+    {
+      "itemId": 100506026,
+      "partnerId": 220002008,
+      "quality": "SR",
+      "name": "施耐德",
+      "appCharacterId": "character.partner.220002008"
+    },
+    {
+      "itemId": 100506029,
+      "partnerId": 220002009,
+      "quality": "R",
+      "name": "矢吹樱",
+      "appCharacterId": "character.partner.220002009"
+    },
+    {
+      "itemId": 100506028,
+      "partnerId": 220002010,
+      "quality": "SR",
+      "name": "樱井小暮",
+      "appCharacterId": "character.partner.220002010"
+    },
+    {
+      "itemId": 100506030,
+      "partnerId": 220002011,
+      "quality": "R",
+      "name": "奇兰",
+      "appCharacterId": "character.partner.220002011"
+    },
+    {
+      "itemId": 100506030,
+      "partnerId": 220002012,
+      "quality": "SR",
+      "name": "樱井七海",
+      "appCharacterId": "character.partner.220002012"
+    },
+    {
+      "itemId": 100506012,
+      "partnerId": 220001001,
+      "quality": "R",
+      "name": "雷蒙德",
+      "appCharacterId": "character.partner.220001001"
+    },
+    {
+      "itemId": 100506005,
+      "partnerId": 220001002,
+      "quality": "R",
+      "name": "塞尔玛",
+      "appCharacterId": "character.partner.220001002"
+    },
+    {
+      "itemId": 100506023,
+      "partnerId": 220001003,
+      "quality": "R",
+      "name": "富山雅史",
+      "appCharacterId": "character.partner.220001003"
+    },
+    {
+      "itemId": 100506045,
+      "partnerId": 220001004,
+      "quality": "R",
+      "name": "万博倩",
+      "appCharacterId": "character.partner.220001004"
+    },
+    {
+      "itemId": 100506012,
+      "partnerId": 220001005,
+      "quality": "R",
+      "name": "高幂",
+      "appCharacterId": "character.partner.220001005"
+    }
+  ]
+}
