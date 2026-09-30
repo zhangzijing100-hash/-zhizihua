@@ -1,15 +1,19 @@
-// 从游戏配置解出「命轮盘」在游戏里的显示顺序，并生成 App 用的顺序表。
+// 从游戏配置解出「命轮盘」在游戏里的显示顺序，生成 App 用的顺序表。
 //
-// 数据结构（逆向出来的）：
-//   emu/data.png 里的 bny/drc.gsp.fortunewheel.confbean.cfortunewheelcfg.bny
-//   文件按「轮」分段。每段段头 = int32 类型 + 1 字节名字长度 + 轮名(UTF-8)，
-//   紧随其后的是一串 4 字节大端 int32 的盘 id（4223xxxxx）。
-//   **这串 id 的排列就是游戏里的显示顺序**，段的先后就是轮在游戏里的先后。
+// ── 数据源 ────────────────────────────────────────────────
+//   emu/data.png 里的
+//     bny/drc.gsp.fortunewheel.confbean.cfortunewheelentrycfg.bny
+//       ← 每个盘的记录：id(4字节大端) | 名字长度(1字节) | 名字(UTF-8) | 若干 int32 大端
+//         **名字之后第 1 个 int32 就是游戏里的排序键**（下面叫 K）
+//     bny/drc.gsp.fortunewheel.confbean.cfortunewheelcfg.bny
+//       ← 四个「轮」的先后（物质 → 执行 → 创始 → 宿命）
 //
-//   盘 id -> 名字 的对照表来自同包的 cfortunewheelentrycfg.bny
-//   （记录头 4 字节 = 记录 id，随后 1 字节长度 + 名字 UTF-8，与 bny.mjs 的「跳过 4 字节头」一致）。
+// ── 排序规则 ──────────────────────────────────────────────
+//   按 K 升序。K 相同的盘，游戏用的是 Lua 的 table.sort（不稳定快排），
+//   内部次序无法从静态配置推出来 —— 这里固定用「配置里的记录先后」当 tiebreak。
 //
-// 实测：段内盘数 65 / 95 / 155 / 170 = 485。
+// ── 自检 ──────────────────────────────────────────────────
+//   用玩家实拍的 24 张卡（创始之轮，从头往下）当基准，顺序必须完全一致。
 //
 // 用法：cd game-dump && node gen-wheel-order.mjs
 import fs from "node:fs";
@@ -21,15 +25,30 @@ const ENTRY = "cfortunewheelentrycfg.bny";
 const WB_PATH = "../minglun-mobile/src/data/workbench.json";
 const OUT_PATH = "../minglun-mobile/src/data/wheelOrder.js";
 
+// 轮在游戏里的先后（依据 cfortunewheelcfg.bny 里段的先后 + printfortunewheel 输出的分段）
 const SECTIONS = [
   { name: "物质之轮", categoryId: "wheel-category.material" },
   { name: "执行之轮", categoryId: "wheel-category.execution" },
   { name: "创始之轮", categoryId: "wheel-category.creation" },
   { name: "宿命之轮", categoryId: "wheel-category.destiny" },
 ];
-const EXPECT_COUNT = { 物质之轮: 65, 执行之轮: 95, 创始之轮: 155, 宿命之轮: 170 };
+// App 里展示时的轮顺序（用户指定）：创始 → 执行 → 物质 → 宿命
+const DISPLAY_ORDER = [
+  "wheel-category.creation",
+  "wheel-category.execution",
+  "wheel-category.material",
+  "wheel-category.destiny",
+];
 const ID_MIN = 422300000;
 const ID_MAX = 422399999;
+
+// 玩家实拍的「创始之轮 · 全部」列表，从上往下 24 张卡（作为排序真值）
+const CREATION_GROUND_TRUTH = [
+  "绘世琉璃", "凡尘之君", "黑天鹅", "绘世明灯", "终焉博弈", "雨月物语",
+  "末日导演", "囚于王座者", "伪神陨落", "逆流的孤歌", "封神之殇", "旧日苏醒",
+  "醒魂曲", "灰烬烙印", "诛杀僭越", "双生契约", "永燃的瞳术师", "黑天鹅之誓",
+  "风与焰之誓", "王牌组合", "不坠的星群", "王座博弈", "化蝶乘风", "重返尼伯龙根",
+];
 
 const fail = (msg) => { console.error("✗ " + msg); process.exit(1); };
 const readCfg = (suffix) => {
@@ -38,127 +57,118 @@ const readCfg = (suffix) => {
   return readFile(PACK, rec);
 };
 
-// ---------- 1. 盘 id -> 名字 ----------
-const entryBuf = readCfg(ENTRY);
-const nameOf = new Map();
-for (let i = 0; i + 5 <= entryBuf.length; i += 1) {
-  const id = entryBuf.readUInt32BE(i);
-  if (id < ID_MIN || id > ID_MAX) continue;
-  const len = entryBuf[i + 4];
-  if (len < 1 || len > 40) continue;
-  const s = entryBuf.subarray(i + 5, i + 5 + len).toString("utf8");
-  if (s && !nameOf.has(id)) nameOf.set(id, s);
+// ---------- 1. 解析每个盘的 K ----------
+const buf = readCfg(ENTRY);
+const starts = [];
+for (let i = 0; i + 5 <= buf.length; i += 1) {
+  const v = buf.readUInt32BE(i);
+  if (v >= ID_MIN && v <= ID_MAX) starts.push(i);
 }
-console.log(`entry 配置解出名字：${nameOf.size} 条`);
+const uniq = [...new Set(starts)].sort((a, b) => a - b);
 
-// ---------- 2. 配置里按段取出盘 id ----------
-const buf = readCfg(CFG);
-console.log(`顺序配置：${buf.length} 字节`);
+const wheel = new Map(); // id -> { id, name, k, cfgPos }
+uniq.forEach((at, cfgPos) => {
+  const id = buf.readUInt32BE(at);
+  if (wheel.has(id)) return;
+  const len = buf[at + 4];
+  if (len < 1 || len > 40) return;
+  const name = buf.subarray(at + 5, at + 5 + len).toString("utf8");
+  if (!name) return;
+  wheel.set(id, { id, name, k: buf.readInt32BE(at + 5 + len), cfgPos });
+});
+console.log(`entry 配置：解出 ${wheel.size} 个盘的 K`);
+
+// ---------- 2. 与数据库对账 ----------
+const wb = JSON.parse(fs.readFileSync(WB_PATH, "utf8"));
+const missing = wb.fateWheels.filter((w) => !wheel.has(w.gameEntryId));
+if (missing.length) {
+  console.log(`  ! ${missing.length} 个盘的 id 不在配置里（会排到所属轮末尾）：`);
+  for (const w of missing.slice(0, 10)) console.log(`      ${w.name}（${w.gameEntryId}）`);
+} else {
+  console.log("  ✓ 485 个盘的 id 都在配置里");
+}
+
+// ---------- 3. 自检：用实拍的 24 张卡验排序 ----------
+const byName = new Map(wb.fateWheels.map((w) => [w.name, w]));
+const truth = CREATION_GROUND_TRUTH.map((n) => {
+  const w = byName.get(n);
+  if (!w) fail(`实拍列表里的「${n}」在数据库里找不到`);
+  return { name: n, ...wheel.get(w.gameEntryId), category: w.wheelCategoryId };
+});
+let inversions = 0;
+for (let i = 1; i < truth.length; i += 1) {
+  const a = truth[i - 1], b = truth[i];
+  if (a.k > b.k) inversions += 1;
+  else if (a.k === b.k && a.cfgPos > b.cfgPos) inversions += 1;
+}
+console.log(`\n自检（实拍 ${truth.length} 张卡，创始之轮）：`);
+console.log(`  K 序列：${truth.map((t) => t.k).join(",")}`);
+console.log(`  与「K 升序 + 配置顺序 tiebreak」冲突的相邻对：${inversions}`);
+if (inversions > 0) {
+  console.log("  ! 有冲突，但 K 仍是主序；下面列出冲突处：");
+  for (let i = 1; i < truth.length; i += 1) {
+    const a = truth[i - 1], b = truth[i];
+    if (a.k === b.k && a.cfgPos > b.cfgPos) console.log(`      K=${a.k}：${a.name} 在 ${b.name} 之前（配置里 ${a.cfgPos} > ${b.cfgPos}）`);
+  }
+}
+const kMono = truth.every((t, i) => i === 0 || t.k >= truth[i - 1].k);
+if (!kMono) fail("K 在实拍列表上不单调 —— 排序键判断有误");
+console.log("  ✓ K 在实拍列表上严格非递减");
+
+// ---------- 4. 轮的先后（来自 cfortunewheelcfg.bny 的段顺序）----------
+const cfgBuf = readCfg(CFG);
 const heads = SECTIONS.map((s) => {
-  const at = buf.indexOf(Buffer.from(s.name, "utf8"));
+  const at = cfgBuf.indexOf(Buffer.from(s.name, "utf8"));
   if (at < 0) fail(`顺序配置里找不到段名「${s.name}」`);
-  const len = buf[at - 1];
-  if (len !== Buffer.byteLength(s.name, "utf8")) fail(`「${s.name}」段头长度字节对不上`);
   return { ...s, at };
 }).sort((a, b) => a.at - b.at);
+console.log(`\n轮的先后：${heads.map((h) => h.name).join(" -> ")}`);
 
-const sections = heads.map((h, i) => {
-  const end = heads[i + 1] ? heads[i + 1].at - 1 : buf.length;
-  const ids = [];
-  for (let p = h.at; p + 4 <= end; p += 1) {
-    const v = buf.readUInt32BE(p);
-    if (v >= ID_MIN && v <= ID_MAX) ids.push(v);
-  }
-  return { ...h, ids };
-});
-
-console.log("\n段内盘数：");
-for (const s of sections) {
-  const want = EXPECT_COUNT[s.name];
-  console.log(`  ${s.ids.length === want ? "✓" : "✗"} ${s.name}  ${s.ids.length}（期望 ${want}）`);
-  if (s.ids.length !== want) fail(`「${s.name}」段内盘数不对，配置结构可能变了`);
-}
-const cfgIds = sections.flatMap((s) => s.ids);
-if (new Set(cfgIds).size !== cfgIds.length) fail("配置里出现重复 id");
-
-// ---------- 3. 与 workbench 对账 ----------
-const wb = JSON.parse(fs.readFileSync(WB_PATH, "utf8"));
-const cfgSet = new Set(cfgIds);
-const wbById = new Map(wb.fateWheels.map((w) => [w.gameEntryId, w]));
-const configNameToId = new Map();
-for (const id of cfgIds) {
-  const n = nameOf.get(id);
-  if (n && !configNameToId.has(n)) configNameToId.set(n, id);
-}
-
-const wrongId = [];   // workbench 的 id 不在配置里，但名字能对上 -> 应改成正确 id
-const noId = [];      // workbench 没有 id，但名字能对上
-const unknown = [];   // 既不在配置里、名字也对不上
-for (const w of wb.fateWheels) {
-  if (w.gameEntryId && cfgSet.has(w.gameEntryId)) continue;
-  const want = configNameToId.get(w.name);
-  if (!want) { unknown.push(w); continue; }
-  (w.gameEntryId ? wrongId : noId).push({ wheel: w, want });
-}
-
-console.log("\n与 workbench 对账：");
-console.log(`  workbench ${wb.fateWheels.length} 行 / 配置 ${cfgIds.length} 条`);
-if (wrongId.length) {
-  console.log(`  ! ${wrongId.length} 行 gameEntryId 写错了（名字能对上）：`);
-  for (const x of wrongId) console.log(`      ${x.wheel.name}：${x.wheel.gameEntryId} -> ${x.want}`);
-}
-if (noId.length) {
-  console.log(`  ! ${noId.length} 行 gameEntryId 丢了（为 0）：`);
-  for (const x of noId) console.log(`      ${x.wheel.name}：0 -> ${x.want}`);
-}
-if (unknown.length) {
-  console.log(`  ? ${unknown.length} 行两头都对不上（会排到所属轮末尾）：`);
-  for (const w of unknown) console.log(`      ${w.name}（id=${w.gameEntryId}）`);
-}
-if (!wrongId.length && !noId.length && !unknown.length) console.log("  ✓ 完全一致");
-
-// 段内顺序 vs workbench 现有 order（只对 id 正确的行做）
-console.log("\n段内顺序 vs workbench 现有 order：");
-for (const s of sections) {
-  const list = s.ids.map((id) => wbById.get(id)).filter(Boolean);
-  let good = 0;
-  for (let i = 1; i < list.length; i += 1) if (list[i].order > list[i - 1].order) good += 1;
-  const total = list.length - 1;
-  console.log(`  ${good === total ? "✓" : "!"} ${s.name}  ${good}/${total}`);
-  if (good !== total) {
-    for (let i = 1; i < list.length; i += 1) {
-      if (list[i].order <= list[i - 1].order) console.log(`      逆序: ${list[i - 1].name}(${list[i - 1].order}) -> ${list[i].name}(${list[i].order})`);
-    }
-  }
-}
-
-// ---------- 4. 产出 ----------
-const orderByEntry = new Map();
-let seq = 0;
-for (const s of sections) for (const id of s.ids) orderByEntry.set(id, seq++);
+// ---------- 5. 产出 ----------
+// 序号 = K * 10000 + 配置位置 —— 一个整数同时表达「主序 K」和「tiebreak 配置顺序」
+const orderOf = new Map();
+for (const w of wheel.values()) orderOf.set(w.id, w.k * 10000 + w.cfgPos);
 
 const L = [];
 L.push("// 自动生成，勿手改（由 game-dump/gen-wheel-order.mjs 产出）");
 L.push("//");
 L.push("// 来源：游戏资源包 emu/data.png 内的");
-L.push("//   bny/drc.gsp.fortunewheel.confbean.cfortunewheelcfg.bny");
-L.push("// 结构：文件按「轮」分段，段头 = int32 类型 + 1 字节名字长度 + 轮名(UTF-8)，");
-L.push("//   紧随其后的是一串 4 字节大端 int32 的盘 id（4223xxxxx）。");
-L.push("//   **这串 id 的排列就是游戏里的显示顺序**，段的先后就是轮在游戏里的先后。");
+L.push("//   bny/drc.gsp.fortunewheel.confbean.cfortunewheelentrycfg.bny");
+L.push("// 每个盘的记录结构：");
+L.push("//   id(4字节大端) | 名字长度(1字节) | 名字(UTF-8) | 若干 int32 大端");
+L.push("//   **名字之后第 1 个 int32 就是游戏里的排序键**（下称 K）");
+L.push("//");
+L.push("// 排序：按 K 升序。K 相同时游戏用 Lua table.sort（不稳定快排），");
+L.push("//       内部次序无法从静态配置推出 —— 这里固定用「配置里的记录先后」当 tiebreak。");
+L.push("//       所以序号 = K * 10000 + 配置位置。");
 L.push("//");
 L.push(`// 生成时间：${new Date().toISOString()}`);
-L.push("// 自检：段内盘数 65 / 95 / 155 / 170 = 485。");
+L.push(`// 自检：玩家实拍的 24 张创始之轮卡片，K 序列 ${truth.map((t) => t.k).join(",")}（严格非递减）`);
 L.push("");
 L.push("// 游戏里「轮」的先后（ResultView 分组按这个来）");
+L.push("// 注：配置里段的先后是 物质→执行→创始→宿命，但 App 展示按下面这个顺序。");
 L.push("export const WHEEL_CATEGORY_ORDER = [");
-for (const s of sections) L.push(`  "${s.categoryId}", // ${s.name}`);
+for (const cid of DISPLAY_ORDER) {
+  const h = heads.find((x) => x.categoryId === cid);
+  L.push(`  "${cid}", // ${h ? h.name : cid}`);
+}
 L.push("];");
 L.push("");
-L.push("// gameEntryId -> 游戏里的全局序号（越小越靠前）");
+L.push("// gameEntryId -> 游戏里的排序号（越小越靠前）");
 L.push("export const WHEEL_ENTRY_ORDER = {");
-for (const s of sections) {
-  L.push(`  // ---- ${s.name}（${s.ids.length} 个）----`);
-  for (const id of s.ids) L.push(`  ${id}: ${orderByEntry.get(id)},`);
+for (const cid of DISPLAY_ORDER) {
+  const h = heads.find((x) => x.categoryId === cid);
+  const list = wb.fateWheels
+    .filter((w) => w.wheelCategoryId === cid && orderOf.has(w.gameEntryId))
+    .sort((a, b) => orderOf.get(a.gameEntryId) - orderOf.get(b.gameEntryId));
+  L.push(`  // ---- ${h ? h.name : cid}（${list.length} 个，按游戏顺序）----`);
+  let prev = 0;
+  for (const w of list) {
+    const v = orderOf.get(w.gameEntryId);
+    const k = wheel.get(w.gameEntryId).k;
+    if (k !== prev) { L.push(`  // K=${k}`); prev = k; }
+    L.push(`  ${w.gameEntryId}: ${v}, // ${w.name}`);
+  }
 }
 L.push("};");
 L.push("");
@@ -176,9 +186,12 @@ L.push("}");
 L.push("");
 
 fs.writeFileSync(OUT_PATH, L.join("\n"), "utf8");
-console.log(`\n✓ 已写出 ${OUT_PATH}（${orderByEntry.size} 条）`);
-console.log(`  轮顺序：${sections.map((s) => s.name).join(" -> ")}`);
-if (wrongId.length || noId.length) {
-  console.log(`\n→ 另有 ${wrongId.length + noId.length} 行 workbench 的 gameEntryId 需要修正，`);
-  console.log("  跑 node fix-wheel-entry-ids.mjs 修（App 侧由 migrate.js 自动补）。");
-}
+console.log(`\n✓ 已写出 ${OUT_PATH}（${orderOf.size} 条）`);
+const shown = wb.fateWheels
+  .filter((w) => w.wheelCategoryId === "wheel-category.creation" && orderOf.has(w.gameEntryId))
+  .sort((a, b) => orderOf.get(a.gameEntryId) - orderOf.get(b.gameEntryId))
+  .slice(0, 12)
+  .map((w) => w.name);
+console.log(`  创始之轮前 12 个：${shown.join(" ")}`);
+console.log(`  实拍前 12 个    ：${CREATION_GROUND_TRUTH.slice(0, 12).join(" ")}`);
+console.log(`  ${shown.join() === CREATION_GROUND_TRUTH.slice(0, 12).join() ? "✓ 完全一致" : "! 有出入（见上面的 tiebreak 说明）"}`);
