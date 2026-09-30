@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">栀子花2</string>
+    <string name="title_activity_main">栀子花2</string>
+    <string name="package_name">com.minglun.app.manual</string>
+    <string name="custom_url_scheme">com.minglun.app.manual</string>
+</resources>
