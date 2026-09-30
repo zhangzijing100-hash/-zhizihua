@@ -3,7 +3,7 @@
 //   B. 双货币 —— 校验各自预算不被超支、买到的命轮确实补进了对应角色
 // 运行： node tests/currency-check.mjs
 import { readFileSync } from "node:fs";
-import { solveWorkbench } from "../src/solver.js";
+import { solveWorkbench } from "../src/engine/solver.js";
 
 const wbFull = JSON.parse(readFileSync(new URL("../src/data/workbench.json", import.meta.url), "utf8"));
 const EXCLUDED = new Set(["source.global.element-resilience", "source.global.element-resilience-break"]);

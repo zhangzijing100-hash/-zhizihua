@@ -7,7 +7,7 @@
 //
 // 运行： node tests/element-percent-check.mjs
 import { readFileSync } from "node:fs";
-import { solveWorkbench } from "../src/solver.js";
+import { solveWorkbench } from "../src/engine/solver.js";
 
 const wbFull = JSON.parse(readFileSync(new URL("../src/data/workbench.json", import.meta.url), "utf8"));
 

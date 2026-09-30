@@ -1,7 +1,7 @@
 // 回归测试：用【独立实现的穷举】验证新目标函数（含双线性精确线性化）是否正确。
 // 运行： node tests/exhaustive-check.mjs
 import { readFileSync } from "node:fs";
-import { solveWorkbench } from "../src/solver.js";
+import { solveWorkbench } from "../src/engine/solver.js";
 
 const wbFull = JSON.parse(readFileSync(new URL("../src/data/workbench.json", import.meta.url), "utf8"));
 

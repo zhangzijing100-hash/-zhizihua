@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import workbenchBundle from "./data/workbench.json";
-import { solveWorkbench, formatNumber, resultDisplayHelpers } from "./solver.js";
+import workbenchBundle from "../data/workbench.json";
+import { solveWorkbench, formatNumber, resultDisplayHelpers } from "../engine/solver.js";
 import {
   auditWorkbench,
   applyFateValueFixes,
@@ -8,10 +8,10 @@ import {
   FATE_VALUE_SOURCE_ID,
   NORMAL_MULTIPLIER,
   DESTINY_STEP,
-} from "./fate-value.js";
-import { storage, KEYS } from "./storage.js";
-import { upgradeWorkbench } from "./migrate.js";
-import furinaUrl from "./assets/furina.png";
+} from "../engine/fate-value.js";
+import { storage, KEYS } from "../core/storage.js";
+import { upgradeWorkbench } from "../core/migrate.js";
+import defaultBgUrl from "../assets/default-bg.jpg";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
@@ -27,10 +27,10 @@ import {
   channelLabel,
   launchGame,
   setConsole,
-} from "./native/gameData.js";
-import { GuideBody, CONSOLE_WARNING } from "./Guide.jsx";
-import { WHEEL_CATEGORY_ORDER, categoryOrderOf, wheelOrderOf } from "./data/wheelOrder.js";
-import { parseFortuneLog, timeFromLogName } from "./data/fortuneLog.js";
+} from "../native/gameData.js";
+import { GuideBody, CONSOLE_WARNING } from "../features/guide/Guide.jsx";
+import { WHEEL_CATEGORY_ORDER, categoryOrderOf, wheelOrderOf } from "../data/wheelOrder.js";
+import { parseFortuneLog, timeFromLogName } from "../features/read/fortuneLog.js";
 
 const RARITY_ORDER = ["UR", "SSR_LIMITED", "SSR", "SR", "R"];
 const RARITY_LABEL = { UR: "UR", SSR_LIMITED: "限定SSR", SSR: "普通SSR", SR: "SR", R: "R" };
@@ -398,7 +398,7 @@ export default function App() {
     // 优先用 Worker：HiGHS 的 solve() 是同步阻塞调用，放主线程会让界面假死、取消按钮点不动
     let worker = null;
     try {
-      worker = new Worker(new URL("./solver.worker.js", import.meta.url), { type: "module" });
+      worker = new Worker(new URL("../engine/solver.worker.js", import.meta.url), { type: "module" });
     } catch {
       worker = null;
     }
@@ -719,7 +719,7 @@ export default function App() {
         className="bg-layer"
         aria-hidden="true"
         style={{
-          backgroundImage: `url(${background.dataUrl ?? furinaUrl})`,
+          backgroundImage: `url(${background.dataUrl ?? defaultBgUrl})`,
           backgroundSize: background.fit === "contain" ? "contain" : "cover",
           opacity: background.opacity,
           filter: background.blur ? `blur(${background.blur}px)` : undefined,
@@ -743,7 +743,7 @@ export default function App() {
           exportPlayer={exportPlayer} importPlayer={importPlayer} exportDatabase={exportDatabase} importDatabase={importDatabase} importPasted={importPasted}
           developerMode={developerMode} setDeveloperMode={setDeveloperMode}
           background={background} chooseBackground={chooseBackground} updateBackground={updateBackground} resetBackground={resetBackground}
-          furinaUrl={furinaUrl}
+          defaultBgUrl={defaultBgUrl}
           playerFileRef={playerFileRef} dbFileRef={dbFileRef} onBack={() => setScreen("main")}
         />
       ) : screen === "dev" ? (
@@ -1336,12 +1336,12 @@ function ResultView({ result, helpers }) {
   );
 }
 
-function SettingsScreen({ profiles, saveProfile, loadProfile, deleteProfile, exportPlayer, importPlayer, exportDatabase, importDatabase, importPasted, developerMode, setDeveloperMode, background, chooseBackground, updateBackground, resetBackground, furinaUrl, playerFileRef, dbFileRef, onBack }) {
+function SettingsScreen({ profiles, saveProfile, loadProfile, deleteProfile, exportPlayer, importPlayer, exportDatabase, importDatabase, importPasted, developerMode, setDeveloperMode, background, chooseBackground, updateBackground, resetBackground, defaultBgUrl, playerFileRef, dbFileRef, onBack }) {
   const [name, setName] = useState("");
   const [mode, setMode] = useState("profile"); // profile | io | bg | dev
   const [pasteText, setPasteText] = useState("");
   const bgFileRef = useRef(null);
-  const bgImage = background.dataUrl ?? furinaUrl;
+  const bgImage = background.dataUrl ?? defaultBgUrl;
   return (
     <main className="content">
       <div className="page-head"><h1>设置</h1><button className="ghost" onClick={onBack}>返回</button></div>

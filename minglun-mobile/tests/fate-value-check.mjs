@@ -9,7 +9,7 @@ import {
   applyFateValueFixes,
   officialFateValue,
   FORMULA_DEVIATIONS,
-} from "../src/fate-value.js";
+} from "../src/engine/fate-value.js";
 
 const workbench = JSON.parse(
   fs.readFileSync(path.join(import.meta.dirname, "../src/data/workbench.json"), "utf8")
