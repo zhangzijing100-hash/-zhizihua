@@ -123,7 +123,7 @@ function formatBytes(n) {
 // zhefeng = 自带的哲风壁纸
 // custom = 用户自己上传的图
 const DEFAULT_BACKGROUND = { mode: "solid", dataUrl: null, name: "", bytes: 0, opacity: 0.5, blur: 0, fit: "cover" };
-const BG_MODES = [["solid", "现在这个"], ["zhefeng", "哲风壁纸"], ["custom", "自定义壁纸"]];
+const BG_MODES = [["solid", "默认"], ["zhefeng", "哲风壁纸"], ["custom", "自定义壁纸"]];
 const BG_OPACITY_MIN = 0.1;
 const BG_OPACITY_MAX = 0.9;
 function clampBgOpacity(value) {
@@ -514,7 +514,8 @@ export default function App() {
       )}
       <header className="topbar">
         <div className="topbar-row">
-          <div className="brand">🌼 栀子花</div>
+          <div className="brand">栀子花</div>
+
           <div className="topbar-actions">
             {activeProfileId && <span className="profile-tag">{profiles.find((p) => p.id === activeProfileId)?.name}</span>}
             <button className="icon-btn" onClick={() => setScreen("settings")} aria-label="设置">⚙</button>
@@ -890,11 +891,12 @@ function SettingsScreen({ profiles, saveProfile, loadProfile, deleteProfile, exp
                 <button key={k} className={background.mode === k ? "on" : ""} onClick={() => updateBackground({ mode: k })}>{l}</button>
               ))}
             </div>
-            <p className="hint" style={{ margin: "2px 0 0" }}>
-              {background.mode === "solid" && "用界面自带的深灰底 + 顶部光晕，不需要图片。"}
-              {background.mode === "zhefeng" && "用随 App 自带的那张壁纸，面板会自动变成液态玻璃。"}
-              {background.mode === "custom" && (background.dataUrl ? `当前：${background.name}（${formatBytes(background.bytes)}）` : "选一张本地图片，面板会自动变成液态玻璃。")}
-            </p>
+            {background.mode !== "solid" && (
+              <p className="hint" style={{ margin: "2px 0 0" }}>
+                {background.mode === "zhefeng" && "用随 App 自带的那张壁纸，面板会自动变成液态玻璃。"}
+                {background.mode === "custom" && (background.dataUrl ? `当前：${background.name}（${formatBytes(background.bytes)}）` : "选一张本地图片，面板会自动变成液态玻璃。")}
+              </p>
+            )}
           </div>
 
           {background.mode === "custom" && (
