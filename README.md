@@ -14,7 +14,7 @@ IOS端的App开发难度较高，且需要Apple账户，后续不打算更新ios
 
 ## 下载
 
-[栀子花2.apk](栀子花2.apk) —— 5.0 MB · versionCode 1 · 包名 `com.minglun.app.manual`
+[栀子花.apk](栀子花.apk) —— 5.0 MB · versionCode 1 · 包名 `com.minglun.app.manual`
 
 使用前请查看[使用说明.md](使用说明.md)
 
@@ -52,7 +52,7 @@ IOS端的App开发难度较高，且需要Apple账户，后续不打算更新ios
 ├── 目录结构.md             工程结构与构建须知
 ├── 命轮盘序.md             485 个盘的游戏顺序
 ├── README.md              本文件
-├── 栀子花2.apk             构建产物
+├── 栀子花.apk             构建产物
 └── 栀子花.ico              图标
 ```
 
