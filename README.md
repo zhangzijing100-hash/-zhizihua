@@ -14,7 +14,7 @@ IOS端的App开发难度较高，且需要Apple账户，后续不打算更新ios
 
 ## 下载
 
-[栀子花.apk](栀子花.apk) —— 5.0 MB · versionCode 1 · 包名 `com.minglun.app.manual`
+Release处自行下载
 
 使用前请查看[使用说明.md](使用说明.md)
 
