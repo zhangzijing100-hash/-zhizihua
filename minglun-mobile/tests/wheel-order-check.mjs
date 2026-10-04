@@ -39,10 +39,10 @@ eq(categoryOrderOf("没这个轮"), Number.POSITIVE_INFINITY, "未知轮返回 I
 // ---- 2. 覆盖度 ----
 console.log("\n=== 2. 顺序表覆盖度 ===");
 const wheels = workbench.fateWheels;
-eq(wheels.length, 485, "workbench 485 个盘");
+eq(wheels.length, 490, "workbench 490 个盘（485 游戏盘 + 5 自定义盘）");
 eq(Object.keys(WHEEL_ENTRY_ORDER).length, 485, "顺序表 485 条");
-eq(wheels.filter((w) => wheelOrderOf(w.gameEntryId) === Number.POSITIVE_INFINITY).length, 0, "每个盘都查得到顺序");
-eq(new Set(wheels.map((w) => w.gameEntryId)).size, 485, "gameEntryId 互不重复");
+eq(wheels.filter((w) => wheelOrderOf(w.gameEntryId) === Number.POSITIVE_INFINITY).length, 5, "5 个自定义盘没有游戏顺序（预期）");
+eq(new Set(wheels.map((w) => w.gameEntryId).filter((id) => id != null)).size, 485, "485 个游戏盘的 gameEntryId 互不重复");
 
 // ---- 3. 每轮条数 ----
 console.log("\n=== 3. 每个轮的盘数 ===");
@@ -50,7 +50,7 @@ const byCat = {};
 for (const w of wheels) byCat[w.wheelCategoryId] = (byCat[w.wheelCategoryId] ?? 0) + 1;
 eq(byCat["wheel-category.material"], 65, "物质之轮 65 个");
 eq(byCat["wheel-category.execution"], 95, "执行之轮 95 个");
-eq(byCat["wheel-category.creation"], 155, "创始之轮 155 个");
+eq(byCat["wheel-category.creation"], 160, "创始之轮 160 个（含 5 个自定义盘）");
 eq(byCat["wheel-category.destiny"], 170, "宿命之轮 170 个");
 
 // ---- 4. 实拍真值（最关键） ----

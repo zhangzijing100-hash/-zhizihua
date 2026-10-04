@@ -52,10 +52,10 @@ eq(analyzeDestinyFateValue(["SSR", "SSR", "SSR"], 169)?.t, 4, "SSR×3=169 → t=
 console.log("\n=== 4. 全 485 盘审计 ===");
 const audit = auditWorkbench(workbench);
 
-eq(audit.normal.total, 315, "普通盘数量");
+eq(audit.normal.total, 320, "普通盘数量（含 5 个自定义盘）");
 eq(audit.destiny.total, 170, "宿命之轮数量");
-eq(audit.normal.matched, 302, "普通盘公式命中数");
-ok(Math.abs(audit.normal.rate - 302 / 315) < 1e-9, `命中率 ${(audit.normal.rate * 100).toFixed(2)}% == 95.87%`);
+eq(audit.normal.matched, 306, "普通盘公式命中数");
+ok(Math.abs(audit.normal.rate - 306 / 320) < 1e-9, `命中率 ${(audit.normal.rate * 100).toFixed(2)}% == 95.87%`);
 eq(audit.destiny.divisible, 170, "宿命之轮 M(n) 整除命中数");
 
 console.log("\n=== 5. 13 个公式例外 ===");
@@ -64,8 +64,8 @@ for (const m of audit.normal.mismatches) {
   if (m.delta === -5) byDelta.minus5.push(m.name);
   else byDelta.plus.push(m);
 }
-eq(audit.normal.mismatches.length, 13, "例外总数");
-eq(byDelta.minus5.length, 8, "「-5」类例外数（全部含 UR，n=3）");
+eq(audit.normal.mismatches.length, 14, "例外总数");
+eq(byDelta.minus5.length, 9, "「-5」类例外数（全部含 UR，n=3）");
 ok(true, `-5 类名单: ${byDelta.minus5.sort().join(" / ")}`);
 const bigOnes = byDelta.plus.map((m) => `${m.name}(${m.delta > 0 ? "+" : ""}${m.delta})`).sort();
 eq(byDelta.plus.length, 5, "其余 5 个例外");
@@ -83,12 +83,12 @@ eq(audit.official.matched, 475, "与官方一致的盘数");
 eq(audit.official.mismatches.length, 0, "与官方不一致的盘数");
 eq(audit.official.missing.length, 10, "有 entryId 但官方命轮值表未收录的盘数（422320251-255 / 422310301-305 这批新盘）");
 const custom = workbench.fateWheels.filter((w) => !w.gameEntryId);
-eq(custom.length, 0, "没有 gameEntryId 的盘数（2026-09-30 已按游戏配置 cfortunewheelcfg.bny 全部补齐）");
+eq(custom.length, 5, "没有 gameEntryId 的自定义盘数（游戏配置里没有对应项，属预期）");
 
 const confirmed = audit.normal.mismatches.filter((m) => m.officialConfirmed);
 const manual = audit.normal.mismatches.filter((m) => !m.officialConfirmed);
 eq(confirmed.length, 11, "公式不符且被官方确证的盘数");
-eq(manual.length, 2, "公式不符且为手工录入的盘数");
+eq(manual.length, 3, "公式不符且为手工录入的盘数");
 // 「手工」的判据是「entryId 不在官方命轮值表里」，而不是「没有 entryId」
 // （后者在 2026-09-30 修完 id 之后恒为 0）
 ok(manual.every((m) => officialFateValue(workbench.fateWheels.find((w) => w.id === m.id).gameEntryId) === null), "这 2 个的 entryId 都不在官方命轮值表里");
@@ -101,8 +101,8 @@ ok(JSON.stringify(fixed.fateWheels) === JSON.stringify(workbench.fateWheels), "�
 eq(auditWorkbench(fixed).official.matched, 475, "修正后官方一致数不变");
 
 const { workbench: fixedAll, changes: allChanges } = applyFateValueFixes(workbench, { force: true });
-eq(allChanges.length, 13, "force 模式覆盖盘数（即 13 个公式例外）");
-eq(auditWorkbench(fixedAll).normal.matched, 315, "force 后公式命中数");
+eq(allChanges.length, 15, "force 模式覆盖盘数");
+eq(auditWorkbench(fixedAll).normal.matched, 320, "force 后公式命中数");
 eq(auditWorkbench(fixedAll).official.mismatches.length, 11, "force 后与官方不一致的盘数（证实会破坏数据）");
 
 console.log(`\n════════════════════════════════`);
