@@ -5,16 +5,16 @@
             当前项只用「左侧发光竖条 + 极淡渐变底」，不反色填充。
    ============================================================ */
 :root {
-  /* --- 底面：不是纯黑，是带径向光的深灰，画面才有纵深 --- */
-  --bg:        #0A0B0D;
-  --glow:      #1B2228;
+  /* --- 底面：不用纯黑，用偏灰的深色 + 径向光，面板才有层次 --- */
+  --bg:        #14161A;
+  --glow:      #262E36;
 
   /* --- 半透面板 --- */
-  --surf-a:    rgba(255, 255, 255, .058);
-  --surf-b:    rgba(255, 255, 255, .028);
-  --hair:      rgba(255, 255, 255, .072);
-  --rule:      rgba(255, 255, 255, .045);
-  --field:     rgba(255, 255, 255, .045);
+  --surf-a:    rgba(255, 255, 255, .082);
+  --surf-b:    rgba(255, 255, 255, .042);
+  --hair:      rgba(255, 255, 255, .10);
+  --rule:      rgba(255, 255, 255, .062);
+  --field:     rgba(255, 255, 255, .065);
 
   /* --- 强调：低饱和青，靠发光不靠填充 --- */
   --accent:     #8FD8C6;
@@ -62,7 +62,32 @@ body {
 input[type="number"], .num, strong
   { font-variant-numeric: tabular-nums; }
 
-.app { display: flex; flex-direction: column; height: 100%; max-width: 640px; margin: 0 auto; position: relative; }
+
+.app { display: flex; flex-direction: column; height: 100%; max-width: 640px; margin: 0 auto; position: relative; z-index: 1; }
+/* 壁纸是白底线稿，直接铺会把界面冲白 —— 压一层暗膜保住文字对比 */
+.bg-layer::after {
+  content: ""; position: absolute; inset: 0;
+  background: rgba(12, 14, 17, .88);
+}
+
+/* 背景壁纸层（只有选了壁纸才渲染） */
+.bg-layer {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background-position: center; background-repeat: no-repeat;
+  pointer-events: none; z-index: 0;
+}
+
+/* 有壁纸时面板换成液态玻璃：毛玻璃 + 更低的不透明度，让图透上来 */
+.app.bg-on .list, .app.bg-on .group, .app.bg-on .wheel-list,
+.app.bg-on .attr-list, .app.bg-on .stack, .app.bg-on .frag-groups,
+.app.bg-on .result-head, .app.bg-on .history-toolbar, .app.bg-on .solving-panel,
+.app.bg-on .field-row, .app.bg-on .switch-row, .app.bg-on .char-card {
+  background-image: none;
+  background-color: rgba(255, 255, 255, .052);
+  backdrop-filter: blur(26px) saturate(135%);
+  -webkit-backdrop-filter: blur(26px) saturate(135%);
+}
+.app.bg-on .group-head, .app.bg-on .wheel-group-head { background: rgba(255, 255, 255, .022); }
 
 /* ---------- 顶栏：一行，无边框 ---------- */
 .topbar { padding: 18px 20px 10px; }
@@ -202,9 +227,30 @@ select, textarea {
 input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--accent-45); }
 
 .config { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-.switch-row input[type="checkbox"] { width: 40px; height: 22px; border-radius: 11px; }
+/* 开关：滑动只用 transform（不动 left/width，避免重排），60fps */
+.switch-row input[type="checkbox"] {
+  width: 46px; height: 26px; border-radius: 13px; border: 1px solid var(--hair);
+  background: rgba(255, 255, 255, .07);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  transition: background-color .22s cubic-bezier(.22,.61,.36,1),
+              border-color .22s cubic-bezier(.22,.61,.36,1);
+}
+.switch-row input[type="checkbox"]::after {
+  content: ""; position: absolute; top: 2px; left: 2px;
+  width: 20px; height: 20px; border: 0; border-radius: 50%;
+  background: rgba(255, 255, 255, .62);
+  transform: translate3d(0, 0, 0);
+  transition: transform .22s cubic-bezier(.22,.61,.36,1),
+              background-color .22s cubic-bezier(.22,.61,.36,1);
+  will-change: transform;
+}
+.switch-row input[type="checkbox"]:checked {
+  background: var(--accent); border-color: transparent;
+  box-shadow: 0 0 14px var(--accent-20);
+}
 .switch-row input[type="checkbox"]:checked::after {
-  left: 22px; top: 5px; width: 4px; height: 8px;
+  left: 2px; top: 2px; width: 20px; height: 20px; border: 0;
+  transform: translate3d(20px, 0, 0); background: var(--accent-ink);
 }
 .field-row input, .field-row select { width: 72px; height: 32px; text-align: right; padding: 0 9px; color: var(--num); font-weight: 500; }
 .field-row input:not([type="number"]) { flex: 1; width: auto; text-align: left; color: var(--text); font-weight: 400; }
@@ -443,4 +489,16 @@ input:focus, select:focus, textarea:focus { outline: 0; border-color: var(--acce
   background: linear-gradient(180deg, rgba(255,255,255,.075), rgba(255,255,255,.035)), rgba(14,16,18,.94);
   color: var(--text); font-size: 12.5px; box-shadow: var(--sh-inset), 0 14px 36px rgba(0,0,0,.6);
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+}
+
+/* ---------- 外观设置里的滑块行 ---------- */
+.range-row { display: flex; align-items: center; gap: 10px; font-size: 12.5px; }
+.range-row > span:first-child { flex: none; min-width: 44px; color: var(--muted); }
+.range-row input[type="range"] {
+  flex: 1; min-width: 0; height: 22px; background: transparent;
+  accent-color: var(--accent);
+}
+.range-row .val {
+  flex: none; min-width: 42px; text-align: right; font-size: 11.5px;
+  color: var(--accent); font-family: var(--mono); font-variant-numeric: tabular-nums;
 }
