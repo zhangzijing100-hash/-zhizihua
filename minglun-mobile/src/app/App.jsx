@@ -11,7 +11,6 @@ import {
 } from "../engine/fate-value.js";
 import { storage, KEYS } from "../core/storage.js";
 import { upgradeWorkbench } from "../core/migrate.js";
-import defaultBgUrl from "../assets/default-bg.jpg";
 import { Capacitor } from "@capacitor/core";
 import { App as CapApp } from "@capacitor/app";
 import { Filesystem, Directory, Encoding } from "@capacitor/filesystem";
@@ -111,63 +110,12 @@ function uid() {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-// ---------- 自定义背景 ----------
-// 默认值与原来一致：芙宁娜图，18% 半透明
-const BG_OPACITY_MIN = 0.05;
-const BG_OPACITY_MAX = 0.7; // 上限 70%，再高背景会盖住文字
-const DEFAULT_BACKGROUND = { dataUrl: null, name: "", bytes: 0, opacity: 0.18, blur: 0, fit: "cover" };
-function clampBgOpacity(value) {
-  const n = Number(value);
-  if (!Number.isFinite(n)) return DEFAULT_BACKGROUND.opacity;
-  return Math.min(BG_OPACITY_MAX, Math.max(BG_OPACITY_MIN, n));
-}
 function formatBytes(n) {
   if (!n) return "—";
   if (n < 1024) return `${n} B`;
   if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
   return `${(n / 1024 / 1024).toFixed(2)} MB`;
 }
-function readImageFromFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = () => reject(new Error("这张图片无法解码"));
-      image.src = reader.result;
-    };
-    reader.onerror = () => reject(new Error("读取文件失败"));
-    reader.readAsDataURL(file);
-  });
-}
-// 缩放 + 转 JPEG：背景不需要原图尺寸，压过才能塞进 localStorage
-function encodeBackground(image, maxEdge, quality) {
-  const w0 = image.naturalWidth || image.width || 1;
-  const h0 = image.naturalHeight || image.height || 1;
-  const scale = Math.min(1, maxEdge / Math.max(w0, h0));
-  const width = Math.max(1, Math.round(w0 * scale));
-  const height = Math.max(1, Math.round(h0 * scale));
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  ctx.fillStyle = "#0b0f14"; // 透明区域按主题底色填充，避免 JPEG 变黑
-  ctx.fillRect(0, 0, width, height);
-  ctx.drawImage(image, 0, 0, width, height);
-  return canvas.toDataURL("image/jpeg", quality);
-}
-async function makeBackgroundImage(file) {
-  if (!file) throw new Error("没有选择文件");
-  // 部分安卓机型选图后 file.type 为空 —— 只要有图片扩展名或类型为空就交给解码器判断
-  const looksImage = /^image\//.test(file.type || "") || /\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(file.name || "");
-  if (file.type && !looksImage) throw new Error("请选择图片文件");
-  const image = await readImageFromFile(file);
-  let dataUrl = encodeBackground(image, 1280, 0.8);
-  if (dataUrl.length > 1_200_000) dataUrl = encodeBackground(image, 900, 0.68);
-  if (dataUrl.length > 2_000_000) throw new Error("图片太大，请换一张尺寸小一些的");
-  return { dataUrl, name: file.name || "自定义图片", bytes: Math.round((dataUrl.length * 3) / 4) };
-}
-
 export default function App() {
   const migratedRef = useRef(false);
   const [workbench, setWorkbench] = useState(() => {
@@ -182,10 +130,6 @@ export default function App() {
   const [profiles, setProfiles] = useState(() => storage.get(KEYS.profiles, []));
   const [activeProfileId, setActiveProfileId] = useState(() => storage.get(KEYS.activeProfile, null));
   const [developerMode, setDeveloperMode] = useState(() => storage.get(KEYS.developerMode, false));
-  const [background, setBackground] = useState(() => {
-    const stored = storage.get(KEYS.background, null) ?? {};
-    return { ...DEFAULT_BACKGROUND, ...stored, opacity: clampBgOpacity(stored.opacity ?? DEFAULT_BACKGROUND.opacity) };
-  });
 
   const [tab, setTab] = useState("goal");
   const [screen, setScreen] = useState("main"); // "main" | "settings" | "dev"
@@ -210,14 +154,6 @@ export default function App() {
   useEffect(() => { storage.set(KEYS.profiles, profiles); }, [profiles]);
   useEffect(() => { storage.set(KEYS.activeProfile, activeProfileId); }, [activeProfileId]);
   useEffect(() => { storage.set(KEYS.developerMode, developerMode); }, [developerMode]);
-  // 背景含 base64 大字符串，拖动滑块时不要每次 input 都写盘 —— 防抖 350ms
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (background.dataUrl && !storage.set(KEYS.background, background)) setNotice("背景保存失败：图片太大或存储空间不足");
-      else if (!background.dataUrl) storage.set(KEYS.background, background);
-    }, 350);
-    return () => clearTimeout(timer);
-  }, [background]);
   // 数据库被补齐时提示一次（补齐后会写回本机，之后不再提示）
   useEffect(() => {
     if (migratedRef.current) setNotice("已为本机数据库补齐新功能所需字段");
@@ -257,7 +193,6 @@ export default function App() {
     };
   }, []);
 
-  // 安卓返回键/手势：在 App 内返回，而不是直接退出
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return;
     const listener = CapApp.addListener("backButton", () => {
@@ -483,34 +418,9 @@ export default function App() {
     } catch (e) { setNotice(e instanceof Error ? e.message : "导入失败"); }
   };
 
-  // 背景外观
-  const chooseBackground = async (file) => {
-    if (!file) return;
-    try {
-      const image = await makeBackgroundImage(file);
-      setBackground((prev) => ({ ...prev, ...image }));
-      setNotice(`已更换背景（${formatBytes(image.bytes)}）`);
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : "更换背景失败");
-    }
-  };
-  const updateBackground = (patch) => setBackground((prev) => ({ ...prev, ...patch, ...(patch.opacity === undefined ? {} : { opacity: clampBgOpacity(patch.opacity) }) }));
-  const resetBackground = () => { setBackground({ ...DEFAULT_BACKGROUND }); setNotice("已恢复默认背景"); };
-
   // ---------- 一键读取命轮库存（读游戏写的 DebugLog） ----------
   return (
     <div className="app">
-      <div
-        className="bg-layer"
-        aria-hidden="true"
-        style={{
-          backgroundImage: `url(${background.dataUrl ?? defaultBgUrl})`,
-          backgroundSize: background.fit === "contain" ? "contain" : "cover",
-          opacity: background.opacity,
-          filter: background.blur ? `blur(${background.blur}px)` : undefined,
-          transform: background.blur ? "scale(1.06)" : undefined,
-        }}
-      />
       <header className="topbar">
         <div className="topbar-row">
           <div className="brand">🌼 栀子花</div>
@@ -527,8 +437,6 @@ export default function App() {
           profiles={profiles} saveProfile={saveProfile} loadProfile={loadProfile} deleteProfile={deleteProfile}
           exportPlayer={exportPlayer} importPlayer={importPlayer} exportDatabase={exportDatabase} importDatabase={importDatabase} importPasted={importPasted}
           developerMode={developerMode} setDeveloperMode={setDeveloperMode}
-          background={background} chooseBackground={chooseBackground} updateBackground={updateBackground} resetBackground={resetBackground}
-          defaultBgUrl={defaultBgUrl}
           playerFileRef={playerFileRef} dbFileRef={dbFileRef} onBack={() => setScreen("main")}
         />
       ) : screen === "dev" ? (
@@ -867,64 +775,19 @@ function ResultView({ result, helpers }) {
   );
 }
 
-function SettingsScreen({ profiles, saveProfile, loadProfile, deleteProfile, exportPlayer, importPlayer, exportDatabase, importDatabase, importPasted, developerMode, setDeveloperMode, background, chooseBackground, updateBackground, resetBackground, defaultBgUrl, playerFileRef, dbFileRef, onBack }) {
+function SettingsScreen({ profiles, saveProfile, loadProfile, deleteProfile, exportPlayer, importPlayer, exportDatabase, importDatabase, importPasted, developerMode, setDeveloperMode, playerFileRef, dbFileRef, onBack }) {
   const [name, setName] = useState("");
-  const [mode, setMode] = useState("profile"); // profile | io | bg | dev
+  const [mode, setMode] = useState("profile"); // profile | io | dev
   const [pasteText, setPasteText] = useState("");
-  const bgFileRef = useRef(null);
-  const bgImage = background.dataUrl ?? defaultBgUrl;
   return (
     <main className="content">
       <div className="page-head"><h1>设置</h1><button className="ghost" onClick={onBack}>返回</button></div>
       <div className="seg">
-        {[["profile", "玩家档案"], ["io", "导入导出"], ["bg", "外观"], ["dev", "开发者"]].map(([k, l]) => (
+        {[["profile", "玩家档案"], ["io", "导入导出"], ["dev", "开发者"]].map(([k, l]) => (
           <button key={k} className={mode === k ? "on" : ""} onClick={() => setMode(k)}>{l}</button>
         ))}
       </div>
 
-      {mode === "bg" && (
-        <div className="stack">
-          <div className="bg-preview">
-            <i style={{
-              backgroundImage: `url(${bgImage})`,
-              backgroundSize: background.fit === "contain" ? "contain" : "cover",
-              opacity: background.opacity,
-              filter: background.blur ? `blur(${background.blur}px)` : undefined,
-              transform: background.blur ? "scale(1.06)" : undefined,
-            }} />
-          </div>
-          <div className="bg-meta">
-            <span>{background.dataUrl ? background.name : "默认背景"}</span>
-            <span>{background.dataUrl ? formatBytes(background.bytes) : ""}</span>
-          </div>
-          <div className="config">
-            <label className="range-row">
-              <span>透明度</span>
-              <input type="range" min="5" max="70" step="1" value={Math.round(background.opacity * 100)} onChange={(e) => updateBackground({ opacity: Number(e.target.value) / 100 })} />
-              <span className="val">{Math.round(background.opacity * 100)}%</span>
-            </label>
-            <label className="range-row">
-              <span>模糊</span>
-              <input type="range" min="0" max="20" step="1" value={background.blur} onChange={(e) => updateBackground({ blur: Number(e.target.value) })} />
-              <span className="val">{background.blur}px</span>
-            </label>
-            <div className="range-row">
-              <span>填充方式</span>
-              <div className="seg" style={{ margin: 0, flex: 1 }}>
-                {[["cover", "铺满"], ["contain", "完整"]].map(([k, l]) => (
-                  <button key={k} className={background.fit === k ? "on" : ""} onClick={() => updateBackground({ fit: k })}>{l}</button>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="config">
-            <button className="ghost block" onClick={() => bgFileRef.current?.click()}>选择本地图片…</button>
-            <input ref={bgFileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={async (e) => { const f = e.target.files?.[0]; if (f) await chooseBackground(f); e.target.value = ""; }} />
-            <button className="ghost block" onClick={resetBackground}>恢复默认背景</button>
-          </div>
-          <p className="hint">图片会被压缩后存在本机。透明度范围 5%–70%（越高越显眼，文字看不清就调低或加点模糊）。（当前 {formatBytes(background.bytes || 0)}）</p>
-        </div>
-      )}
 
       {mode === "profile" && (
         <div className="stack">

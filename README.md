@@ -1,11 +1,14 @@
-# 栀子花2
+# 栀子花
 
-《龙族：卡塞尔之门》的命轮升级规划工具（安卓端）。
+《龙族：卡塞尔之门》的命轮升级规划工具（安卓端）
+
+IOS端的App开发难度较高，且需要Apple账户，后续不打算更新ios版本
 
 录入你拥有的命轮和碎片，设定优化目标，它用混合整数规划（HiGHS WASM，跑在手机本地）
+
 算出全局最优的升级顺序 —— 怎么升最省、先升谁。
 
-完全离线：只有一条 `INTERNET` 权限，不读游戏文件、不跟游戏通信、不修改任何游戏数据。
+完全离线：不读游戏文件、不修改游戏数据
 
 ---
 
@@ -13,7 +16,7 @@
 
 [栀子花2.apk](栀子花2.apk) —— 5.0 MB · versionCode 1 · 包名 `com.minglun.app.manual`
 
-直接装，或者看 [使用说明.md](使用说明.md)。
+使用前请查看[使用说明.md](使用说明.md)
 
 ---
 
@@ -30,10 +33,11 @@
 | 开发者模式 | 自己改命轮库：加盘、改成员、调全局设置 |
 | 外观 | 自定义背景（透明度 / 模糊 / 缩放） |
 
-结果按游戏盘序排列：先分「创始之轮 → 执行之轮 → 物质之轮 → 宿命之轮」四段，
-组内顺序取自游戏配置里的排序键，照着往下加点就行。
+结果按游戏盘序排列：先分「创始之轮 → 执行之轮 → 物质之轮 → 宿命之轮」四段
 
-内置数据：63 个伙伴 / 485 个关系盘（目前至须佐）。
+组内顺序取自游戏配置里的排序键
+
+内置数据：63 个伙伴 / 485 个关系盘（目前角色盘至须佐之男，后续角色与盘可自行在开发者模式中添加）
 
 ---
 
@@ -41,78 +45,26 @@
 
 ```
 栀子花/
-├── minglun-mobile/        App 工程（前端 + 安卓原生壳）
-├── game-dump/             游戏解包与逆向工作区（3 GB，不入库）
-├── _archive/              归档：不再参与开发但没删的东西（不入库）
+├── minglun-mobile/        App 工程
+├── game-dump/             游戏解包与逆向工作区
+├── _archive/              归档：不再参与开发但没删的东西
 ├── 使用说明.md             给用户的说明书
 ├── 目录结构.md             工程结构与构建须知
-├── 命轮盘序.md             485 个盘的完整游戏顺序
+├── 命轮盘序.md             485 个盘的游戏顺序
 ├── README.md              本文件
 ├── 栀子花2.apk             构建产物
 └── 栀子花.ico              图标
 ```
 
-工程内部的目录划分见 [目录结构.md](目录结构.md)。
+工程内部的目录划分见 [目录结构.md](目录结构.md)
 
 ---
 
-## 从源码构建
+## 免责声明
 
-需要 Node ≥ 18 和 Android SDK（本机用的是仓库外的 `.android-tools/`）。
-
-```powershell
-$root = 'C:\Users\Ricairo\Desktop\栀子花'
-$env:GRADLE_USER_HOME = "$root\.gradle-home"
-$env:TEMP = "$root\.build-tmp\jvm-tmp"; $env:TMP = $env:TEMP
-$env:JAVA_HOME = "$root\.android-tools\jdk\jdk-21.0.12+8"
-$env:ANDROID_HOME = "$root\.android-tools\sdk"
-
-cd "$root\minglun-mobile"
-npm install
-npm run build
-npx cap sync android
-cd android
-& "$root\.android-tools\gradle\gradle-8.14.3\bin\gradle.bat" assembleRelease --console=plain --no-daemon `
-    "-Pkotlin.compiler.execution.strategy=in-process"
-```
-
-产物在 `minglun-mobile/android/app/build/outputs/apk/release/app-release.apk`。
-
-> ⚠️ 那两个环境变量和最后那个 `-P` 参数不能省：
-> 本机 JVM 写不了工作区外的临时文件，而 Kotlin 编译 worker 处理不了非 ASCII 路径。
-
----
-
-## 跑测试
-
-```powershell
-cd minglun-mobile
-node tests/wheel-order-check.mjs      # 游戏盘序（对照实拍）
-node tests/fate-value-check.mjs       # 命轮值公式 vs 官方数据
-node tests/exhaustive-check.mjs       # 求解器 vs 穷举最优
-node tests/currency-check.mjs         # 兑换资源
-node tests/selfselect-check.mjs       # SSR 自选池
-node tests/migrate-check.mjs          # 老数据迁移
-node tests/element-percent-check.mjs  # 元素百分比
-```
-
----
-
-## 签名
-
-发布包用 `minglun-mobile/minglun-release.keystore` 签名，口令放在
-`minglun-mobile/android/keystore.properties`。
-
-这两个文件都在仓库里，但**已被 `.gitignore` 排除、不会上传** —— 请自行另存，
-丢了就签不出同签名的包，已安装的用户没法覆盖升级。
-
-证书 SHA-256：`5c0b0b3a75e580bd6697fa3b49e41456d5a2ad290c8623291e9ede6b5a56494d`
-
----
-
-## 免责
-
-本工具只是离线计算器：它读不到你的游戏账号，也不会替你操作游戏。
+本工具只是离线计算器：不读取账号，不动游戏内存
 
 游戏数据（角色、关系盘、命轮值）来自公开渠道整理的静态配置，可能随版本变化；
-对不上的数据可以在「开发者」页里自行修改。
+对不上的数据可以在「开发者」页里自行修改
+
+请勿用此开源项目谋取利益，坚守开源精神
