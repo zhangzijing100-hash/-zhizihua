@@ -1,8 +1,3 @@
-# ============================================================
-#  栀子花2 —— 仓库只放「源码」，不放游戏资源 / 工具链 / 密钥
-# ============================================================
-
-# ---------- 绝不入库：签名密钥与口令 ----------
 *.keystore
 *.jks
 keystore-info.txt
@@ -10,8 +5,7 @@ keystore.properties
 **/android/keystore.properties
 **/minglun-release.keystore
 
-# ---------- 绝不入库：游戏本体、解包数据、抓包（版权 + 体积） ----------
-# game-dump 整体排除：逆向脚本与结论也一并移出仓库（版权考虑），本地文件保留
+
 game-dump/
 *.apk
 *.obb
@@ -19,11 +13,9 @@ game-dump/
 手机渠道快照.json
 栀子花数据库-*.json
 
-# ---------- 第三方工具链 / 缓存（体积） ----------
 .android-tools/
 .npm-cache/
 
-# ---------- 依赖与构建产物 ----------
 node_modules/
 **/node_modules/
 dist/
@@ -39,21 +31,17 @@ dist/
 **/android/app/src/main/assets/cordova_plugins.js
 *.iml
 
-# ---------- 杂项 ----------
 *.log
 $null
 .DS_Store
 Thumbs.db
 workbench.json.bak-*
 
-# ---------- 归档 / 构建中间产物 ----------
 _archive/
 .build-tmp/
 .gradle-home/
 .gradle-native/
 
-# ---------- 与项目无关的零散文件 ----------
 【哲风壁纸】*
 
-# ---------- 设计探索产物（小样与截图） ----------
 ui-redesign/
